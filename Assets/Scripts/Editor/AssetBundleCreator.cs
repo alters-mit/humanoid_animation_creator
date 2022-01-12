@@ -1,7 +1,8 @@
+using System.IO;
+using System;
 using System.Collections.Generic;
 using UnityEditor;
 using UnityEngine;
-using System.IO;
 
 
 /// <summary>
@@ -26,10 +27,12 @@ public static class AssetBundleCreator
     };
 
 
-    [MenuItem("TDW/Test")]
-    public static void Test()
+    /// <summary>
+    /// Create asset bundles of an animation file.
+    /// </summary>
+    public static void CreateAssetBundles()
     {
-        Create("idle_neutral_1");
+        Create(GetArgument("name"));
     }
 
 
@@ -37,7 +40,7 @@ public static class AssetBundleCreator
     /// Create asset bundles of an animation file.
     /// </summary>
     /// <param name="name">The name of the animation file.</param>
-    public static void Create(string name)
+    private static void Create(string name)
     {
         AssetBundleBuild[] builds = new AssetBundleBuild[]
         {
@@ -57,13 +60,13 @@ public static class AssetBundleCreator
         // Create the record.
         string record = "{\"name\":\"" + clip.name + "\"," +
             "\"duration\":" + clip.length + "," +
-            "\"loop\":" + (clip.isLooping ? "True" : "False") + "," +
+            "\"loop\":" + (clip.isLooping ? "true" : "false") + "," +
             "\"framerate\":" + clip.frameRate + "," +
             "\"urls\":{";
         foreach (BuildTarget target in targets.Keys)
         {
             string path = "file:///" + Path.Combine(Application.dataPath, ASSET_BUNDLES_DIRECTORY,
-                name, target.ToString(), name + ".anim");
+                name, target.ToString(), name);
             record += "\"" + targets[target] + "\":\"" + path + "\",";
         }
         record = record.Substring(0, record.Length - 1);
@@ -86,5 +89,24 @@ public static class AssetBundleCreator
                 BuildAssetBundleOptions.None,
                 target);
         }
+    }
+
+
+    /// <summary>
+    /// Returns the command line argument for a given flag.
+    /// </summary>
+    /// <param name="flag">The flag without the "-" or "=" (e.g. filename, not -filename=)</param>
+    private static string GetArgument(string flag)
+    {
+        string[] args = Environment.GetCommandLineArgs();
+        foreach (string a in args)
+        {
+            string arg = a.Replace("\"", "");
+            if (arg.StartsWith("-" + flag + "="))
+            {
+                return arg.Split('=')[1];
+            }
+        }
+        throw new Exception("Argument not found: " + flag);
     }
 }
